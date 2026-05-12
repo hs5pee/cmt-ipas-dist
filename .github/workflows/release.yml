@@ -3,7 +3,7 @@ name: Release Build
 on:
   push:
     tags:
-      - 'v*'
+      - 'v*' # ทำงานเมื่อมีการสร้าง Tag เช่น v1.0.1
 
 jobs:
   build:
@@ -29,6 +29,12 @@ jobs:
         uses: dtolnay/rust-toolchain@stable
         with:
           targets: ${{ matrix.target }}
+
+      - name: Install System Dependencies (Linux)
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgtk-3-dev libayatana-appindicator3-dev librsvg2-dev
 
       - name: Build binary
         run: cargo build --release --target ${{ matrix.target }}
