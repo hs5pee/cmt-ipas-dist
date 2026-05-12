@@ -1,0 +1,52 @@
+# CMT-IPAS Default Configuration
+# Internet Protocol Audio Server
+
+[server]
+# TCP/TLS control plane port (CMT-IPAS standard)
+port = 14738
+# WebSocket port (for Web Dashboard)
+ws_port = 19001
+# Maximum concurrent connections
+max_clients = 200
+# Server registration code (for new nodes to join)
+register_code = "CMT-IPAS-2026"
+# Server welcome message
+welcome_message = "Welcome to CMT-IPAS Industrial Gateway"
+
+[tls]
+# Path to SSL Certificate and Private Key (for WSS and TLS)
+# If files not found, a self-signed certificate will be generated automatically.
+cert_path = "config/cert.pem"
+key_path = "config/key.pem"
+
+[admin]
+# Default Super Admin credentials (change immediately after installation!)
+username = "admin"
+password = "password123"
+
+[mqtt]
+# Control Bus broker address (CMT Standard Ports)
+host = "127.0.0.1"
+port = 11883
+# MQTT over WebSocket port
+ws_port = 18083
+# MQTT over Secure WebSocket port (WSS)
+wss_port = 18084
+# Client ID (unique per server instance)
+client_id = "cmt-ipas-server-01"
+# Topic prefix for all IPAS messages
+topic_prefix = "ipas"
+
+[audio]
+# Audio codec: "opus" (recommended)
+codec = "opus"
+# Opus bitrate in bps (8000 - 128000)
+bitrate = 48000
+# Audio frame size in ms (10, 20, 40, 60)
+frame_size_ms = 20
+
+[logging]
+# Log level: "error", "warn", "info", "debug", "trace"
+level = "info"
+# Log to file (optional, empty = stdout only)
+file = ""
