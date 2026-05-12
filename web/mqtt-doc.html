@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MQTT Documentation - CMT-IPAS</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+      color: #e4e4e7;
+      line-height: 1.6;
+      padding: 20px;
+    }
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    h1 {
+      font-size: 2.5rem;
+      color: #58a6ff;
+      margin-bottom: 10px;
+      text-align: center;
+    }
+    .subtitle {
+      text-align: center;
+      color: #8b949e;
+      margin-bottom: 40px;
+    }
+    .section {
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 24px;
+    }
+    .section h2 {
+      color: #58a6ff;
+      font-size: 1.5rem;
+      margin-bottom: 16px;
+      border-bottom: 1px solid #30363d;
+      padding-bottom: 12px;
+    }
+    .section h3 {
+      color: #a5d6ff;
+      font-size: 1.2rem;
+      margin: 20px 0 12px;
+    }
+    .info-box {
+      background: #1f2937;
+      border-left: 4px solid #58a6ff;
+      padding: 16px;
+      margin: 16px 0;
+      border-radius: 0 8px 8px 0;
+    }
+    .info-box h4 {
+      color: #58a6ff;
+      margin-bottom: 8px;
+    }
+    .topic-card {
+      background: #21262d;
+      border: 1px solid #30363d;
+      border-radius: 8px;
+      padding: 20px;
+      margin: 16px 0;
+    }
+    .topic-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+    .topic-name {
+      font-family: 'Courier New', monospace;
+      color: #7ee787;
+      font-size: 1.1rem;
+      font-weight: bold;
+    }
+    .copy-btn {
+      background: #238636;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+      transition: all 0.2s;
+    }
+    .copy-btn:hover {
+      background: #2ea043;
+      transform: translateY(-1px);
+    }
+    .copy-btn.copied {
+      background: #7ee787;
+      color: #0d1117;
+    }
+    .direction {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: bold;
+      margin-left: 8px;
+    }
+    .direction.publish {
+      background: rgba(35, 134, 54, 0.2);
+      color: #7ee787;
+    }
+    .direction.subscribe {
+      background: rgba(88, 166, 255, 0.2);
+      color: #58a6ff;
+    }
+    .json-block {
+      background: #0d1117;
+      border: 1px solid #30363d;
+      border-radius: 8px;
+      padding: 16px;
+      margin: 12px 0;
+      position: relative;
+    }
+    .json-block pre {
+      color: #a5d6ff;
+      font-family: 'Courier New', monospace;
+      font-size: 14px;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+    }
+    .copy-json-btn {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      background: #30363d;
+      color: #e4e4e7;
+      border: 1px solid #484f58;
+      padding: 4px 12px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 12px;
+    }
+    .copy-json-btn:hover {
+      background: #484f58;
+    }
+    .step {
+      display: flex;
+      align-items: flex-start;
+      margin: 12px 0;
+    }
+    .step-number {
+      background: #58a6ff;
+      color: #0d1117;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      margin-right: 12px;
+      flex-shrink: 0;
+    }
+    .step-content {
+      flex: 1;
+    }
+    .example-box {
+      background: #1f2937;
+      border: 1px solid #30363d;
+      border-radius: 8px;
+      padding: 16px;
+      margin: 16px 0;
+    }
+    .example-box h4 {
+      color: #d2a8ff;
+      margin-bottom: 12px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 16px 0;
+    }
+    th, td {
+      padding: 12px;
+      text-align: left;
+      border-bottom: 1px solid #30363d;
+    }
+    th {
+      background: #21262d;
+      color: #a5d6ff;
+    }
+    code {
+      background: #21262d;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-family: 'Courier New', monospace;
+      font-size: 0.9em;
+    }
+    .footer {
+      text-align: center;
+      color: #8b949e;
+      margin-top: 40px;
+      padding: 20px;
+      border-top: 1px solid #30363d;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>📡 MQTT Documentation</h1>
+    <p class="subtitle">CMT-IPAS Industrial Audio Gateway - Channel Switching via MQTT</p>
+
+    <div class="section">
+      <h2>🔌 Connection Settings</h2>
+      <div class="info-box">
+        <h4>MQTT Broker Information</h4>
+        <p><strong>Host:</strong> <code>127.0.0.1</code> (or your server IP)</p>
+        <p><strong>Port:</strong> <code>1883</code> (TCP) / <code>8083</code> (WebSocket)</p>
+        <p><strong>Username:</strong> Your device username</p>
+        <p><strong>Password:</strong> Your device password</p>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>📋 Request Channel List</h2>
+      <p>Get list of available channels that the user can access and their current location.</p>
+      
+      <div class="topic-card">
+        <div class="topic-header">
+          <div>
+            <span class="topic-name">cmt/channels/list/{username}</span>
+            <span class="direction publish">PUBLISH</span>
+          </div>
+          <button class="copy-btn" onclick="copyTopic('cmt/channels/list/phichet_2', this)">📋 Copy Topic</button>
+        </div>
+        <p><strong>Description:</strong> Publish to this topic to request the list of channels available for the specified user. <strong>Note:</strong> The server will only return channels the user has permission to enter.</p>
+        <p><strong>Payload:</strong> The username string (plain text) or JSON containing username.</p>
+        <div class="json-block">
+          <button class="copy-json-btn" onclick="copyJson(this)">📋 Copy</button>
+          <pre>phichet_2</pre>
+        </div>
+        <p><strong>Example:</strong> <code>cmt/channels/list/phichet_2</code></p>
+      </div>
+
+      <div class="topic-card">
+        <div class="topic-header">
+          <div>
+            <span class="topic-name">cmt/user/channel/list/{username}</span>
+            <span class="direction subscribe">SUBSCRIBE</span>
+          </div>
+          <button class="copy-btn" onclick="copyTopic('cmt/user/channel/list/phichet_2', this)">📋 Copy Topic</button>
+        </div>
+        <p><strong>Description:</strong> Subscribe to this topic to receive the channel list response and current location.</p>
+        <p><strong>Response Payload:</strong></p>
+        <div class="json-block">
+          <button class="copy-json-btn" onclick="copyJson(this)">📋 Copy</button>
+          <pre>{
+  "username": "phichet_2",
+  "current_channel": {
+    "id": 0,
+    "name": "Root (Lobby)"
+  },
+  "channels": [
+    {
+      "id": 1,
+      "name": "CMT-TEST01",
+      "is_private": false,
+      "has_invitation": false,
+      "can_access": true
+    },
+    {
+      "id": 2,
+      "name": "CMT-TEST02",
+      "is_private": true,
+      "has_invitation": true,
+      "can_access": true
+    }
+  ]
+}</pre>
+        </div>
+      </div>
+
+      <h3>📝 Usage Steps</h3>
+      <div class="step">
+        <div class="step-number">1</div>
+        <div class="step-content">
+          <p>Subscribe to <code>cmt/user/channel/list/{username}</code></p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-number">2</div>
+        <div class="step-content">
+          <p>Publish to <code>cmt/channels/list/{username}</code></p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-number">3</div>
+        <div class="step-content">
+          <p>Receive channel list and current location on the response topic</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>🔄 Move to Channel</h2>
+      <p>Commands to switch between channels via MQTT.</p>
+      
+      <div class="topic-card" style="border: 2px solid #238636;">
+        <div class="topic-header">
+          <div>
+            <span class="topic-name">cmt/user/channel/move/{username}</span>
+            <span class="direction publish">PUBLISH</span>
+            <span style="color: #7ee787; font-size: 0.8rem; margin-left: 10px;">★ RECOMMENDED FOR CLIENTS</span>
+          </div>
+          <button class="copy-btn" onclick="copyTopic('cmt/user/channel/move/phichet_2', this)">📋 Copy Topic</button>
+        </div>
+        <p><strong>Description:</strong> Move yourself to a target channel securely. <strong>No session_id required.</strong></p>
+        <p><strong>Auto-Refresh:</strong> The server will automatically send an updated channel list after a successful move.</p>
+        <p><strong>Request Payload:</strong></p>
+        <div class="json-block">
+          <button class="copy-json-btn" onclick="copyJson(this)">📋 Copy</button>
+          <pre>{
+  "channel_id": 1
+}</pre>
+        </div>
+        <p style="color: #8b949e; font-size: 0.9rem;">(Or just send the number <code>1</code> as plain text payload)</p>
+      </div>
+
+      <div class="topic-card" style="opacity: 0.7;">
+        <div class="topic-header">
+          <div>
+            <span class="topic-name">cmt/channels/move</span>
+            <span class="direction publish">PUBLISH</span>
+            <span style="color: #f85149; font-size: 0.8rem; margin-left: 10px;">⚠️ ADMIN ONLY</span>
+          </div>
+          <button class="copy-btn" onclick="copyTopic('cmt/channels/move', this)">📋 Copy Topic</button>
+        </div>
+        <p><strong>Description:</strong> Administrative move command. Requires specific session identification.</p>
+        <p><strong>Request Payload:</strong></p>
+        <div class="json-block">
+          <button class="copy-json-btn" onclick="copyJson(this)">📋 Copy</button>
+          <pre>{
+  "username": "user1",
+  "session_id": 123,
+  "channel_id": 2
+}</pre>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>📊 Payload Fields Reference</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Field</th>
+            <th>Type</th>
+            <th>Description</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>username</code></td>
+            <td>String</td>
+            <td>Username of the user</td>
+          </tr>
+          <tr>
+            <td><code>current_channel</code></td>
+            <td>Object</td>
+            <td>Contains <code>id</code> and <code>name</code> of user's current channel</td>
+          </tr>
+          <tr>
+            <td><code>channel_id</code></td>
+            <td>Number</td>
+            <td>ID of the target channel for move requests</td>
+          </tr>
+          <tr>
+            <td><code>channels</code></td>
+            <td>Array</td>
+            <td>List of accessible channels</td>
+          </tr>
+          <tr>
+            <td><code>can_access</code></td>
+            <td>Boolean</td>
+            <td>Always <code>true</code> in the filtered list</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="section">
+      <h2>💡 Complete Example</h2>
+      <div class="example-box">
+        <h4>Scenario: User "phichet_2" wants to switch to CMT-TEST01</h4>
+        
+        <h3>Step 1: Get Status & List</h3>
+        <p><strong>Subscribe to:</strong> <code>cmt/user/channel/list/phichet_2</code></p>
+        <p><strong>Publish to:</strong> <code>cmt/channels/list/phichet_2</code></p>
+        
+        <h3>Step 2: Process Response</h3>
+        <p>Server returns current channel (e.g., Root) and list of accessible channels (IDs 1, 2).</p>
+        
+        <h3>Step 3: Move to Channel 1</h3>
+        <p><strong>Publish to:</strong> <code>cmt/user/channel/move/phichet_2</code></p>
+        <p><strong>Payload:</strong> <code>{"channel_id": 1}</code></p>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>⚠️ Important Notes</h2>
+      <div class="info-box">
+        <h4>Security</h4>
+        <p>The new <code>cmt/user/channel/move/{username}</code> topic ensures that users can only move their own sessions to channels they have explicit permission to enter.</p>
+      </div>
+      <div class="info-box">
+        <h4>QoS Level</h4>
+        <p>All MQTT operations use QoS 0 (At Most Once) for performance. If guaranteed delivery is needed, the client should implement its own acknowledgment logic by listening for its own position changes.</p>
+      </div>
+    </div>
+
+    <div class="footer">
+      <p>CMT-IPAS MQTT Documentation v1.0</p>
+      <p>For support, refer to the main documentation or contact the system administrator.</p>
+    </div>
+  </div>
+
+  <script>
+    function copyTopic(topic, button) {
+      navigator.clipboard.writeText(topic).then(() => {
+        const originalText = button.textContent;
+        button.textContent = '✅ Copied!';
+        button.classList.add('copied');
+        setTimeout(() => {
+          button.textContent = originalText;
+          button.classList.remove('copied');
+        }, 2000);
+      });
+    }
+
+    function copyJson(button) {
+      const pre = button.nextElementSibling;
+      const text = pre.textContent;
+      navigator.clipboard.writeText(text).then(() => {
+        const originalText = button.textContent;
+        button.textContent = '✅ Copied!';
+        setTimeout(() => {
+          button.textContent = originalText;
+        }, 2000);
+      });
+    }
+  </script>
+</body>
+</html>

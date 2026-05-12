@@ -1,0 +1,1439 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CMT-IPAS Admin Panel</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+:root {
+  --bg: #0d1117; --bg2: #161b22; --bg3: #21262d;
+  --border: #30363d; --text: #e6edf3; --text2: #8b949e;
+  --accent: #58a6ff; --green: #3fb950; --red: #f85149;
+  --yellow: #d29922; --purple: #bc8cff;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); display: flex; height: 100vh; overflow: hidden; }
+/* Sidebar */
+#sidebar { width: 220px; background: var(--bg2); border-right: 1px solid var(--border); display: flex; flex-direction: column; }
+#sidebar .logo { padding: 20px 16px; border-bottom: 1px solid var(--border); }
+#sidebar .logo h2 { font-size: 14px; color: var(--accent); font-weight: 700; }
+#sidebar .logo p { font-size: 11px; color: var(--text2); margin-top: 2px; }
+#sidebar nav { flex: 1; padding: 8px; }
+#sidebar nav .menu-item { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: 6px; color: var(--text2); text-decoration: none; font-size: 13px; cursor: pointer; transition: all .15s; margin-bottom: 2px; }
+#sidebar nav .menu-item:hover, #sidebar nav .menu-item.active { background: var(--bg3); color: var(--text); }
+#sidebar nav .menu-item.active { color: var(--accent); }
+#sidebar .status { padding: 12px 16px; border-top: 1px solid var(--border); font-size: 11px; color: var(--text2); }
+#sidebar .status span { color: var(--green); }
+/* Main */
+#main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+#topbar { padding: 12px 20px; border-bottom: 1px solid var(--border); background: var(--bg2); display: flex; justify-content: space-between; align-items: center; }
+#topbar h1 { font-size: 16px; font-weight: 600; }
+#topbar .actions { display: flex; gap: 8px; align-items: center; }
+#content { flex: 1; overflow-y: auto; padding: 20px; }
+/* Cards */
+.cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; margin-bottom: 20px; }
+.card { background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; padding: 16px; }
+.card .val { font-size: 28px; font-weight: 700; margin-top: 4px; }
+.card .lbl { font-size: 11px; color: var(--text2); text-transform: uppercase; letter-spacing: .5px; }
+.card.green .val { color: var(--green); }
+.card.blue .val { color: var(--accent); }
+.card.red .val { color: var(--red); }
+.card.yellow .val { color: var(--yellow); }
+/* Table */
+.table-wrap { background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+.table-header { padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); }
+.table-header h3 { font-size: 14px; font-weight: 600; }
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+th { padding: 10px 16px; text-align: left; color: var(--text2); font-weight: 500; font-size: 11px; text-transform: uppercase; letter-spacing: .5px; border-bottom: 1px solid var(--border); }
+td { padding: 10px 16px; border-bottom: 1px solid var(--border); }
+tr:last-child td { border-bottom: none; }
+tr:hover td { background: var(--bg3); }
+/* Badges */
+.badge { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 20px; font-size: 11px; font-weight: 600; }
+.badge.online { background: rgba(63,185,80,.15); color: var(--green); }
+.badge.offline { background: rgba(139,148,158,.1); color: var(--text2); }
+.badge.banned { background: rgba(248,81,73,.15); color: var(--red); }
+.badge.public { background: rgba(88,166,255,.15); color: var(--accent); }
+.badge.private { background: rgba(188,140,255,.15); color: var(--purple); }
+.badge.owner { background: rgba(210,153,34,.15); color: var(--yellow); }
+.badge.admin { background: rgba(88,166,255,.15); color: var(--accent); }
+/* Buttons */
+.btn { padding: 6px 14px; border-radius: 6px; border: none; cursor: pointer; font-size: 12px; font-weight: 600; transition: all .15s; }
+.btn-primary { background: var(--accent); color: #0d1117; }
+.btn-primary:hover { filter: brightness(1.1); }
+.btn-danger { background: rgba(248,81,73,.15); color: var(--red); border: 1px solid rgba(248,81,73,.3); }
+.btn-danger:hover { background: rgba(248,81,73,.25); }
+.btn-sm { padding: 8px 16px; font-size: 14px; }
+.btn-ghost { background: var(--bg3); color: var(--text); border: 1px solid var(--border); }
+.btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
+/* Forms */
+.form-group { margin-bottom: 14px; }
+.form-group label { display: block; font-size: 12px; color: var(--text2); margin-bottom: 6px; }
+.form-group input, .form-group select { width: 100%; padding: 8px 12px; background: var(--bg3); border: 1px solid var(--border); border-radius: 6px; color: var(--text); font-size: 13px; outline: none; }
+.form-group input:focus, .form-group select:focus { border-color: var(--accent); }
+/* Modal */
+.overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.6); z-index: 100; align-items: center; justify-content: center; }
+.overlay.show { display: flex; }
+.modal { background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; padding: 24px; width: 380px; }
+.modal h3 { margin-bottom: 16px; font-size: 15px; }
+.modal-footer { display: flex; gap: 8px; justify-content: flex-end; margin-top: 16px; }
+/* Alerts & Toasts */
+.alert { padding: 12px 16px; border-radius: 8px; margin-bottom: 16px; display: none; align-items: center; justify-content: space-between; font-size: 13px; }
+.alert-warning { background: rgba(210,153,34,.15); border: 1px solid rgba(210,153,34,.3); color: var(--yellow); }
+/* Toast Notifications (Modal Style) */
+#toast-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.7);
+    display: none; z-index: 99999;
+}
+#toast-overlay.show { display: block; }
+
+#toast-container {
+    position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+    background: var(--bg2); border: 1px solid var(--border); border-radius: 12px;
+    padding: 40px 50px; width: 400px;
+    display: none; flex-direction: column; align-items: center; justify-content: center;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+    z-index: 100000;
+}
+#toast-overlay.show #toast-container { display: flex; }
+.toast-icon { font-size: 48px; margin-bottom: 20px; }
+.toast-message { font-size: 18px; font-weight: 600; color: var(--text); text-align: center; }
+/* Login */
+#login-screen { position: fixed; inset: 0; background: var(--bg); display: flex; align-items: center; justify-content: center; z-index: 200; }
+.login-box { background: var(--bg2); border: 1px solid var(--border); border-radius: 12px; padding: 32px; width: 340px; }
+.login-box .brand { text-align: center; margin-bottom: 24px; }
+.login-box .brand h2 { color: var(--accent); font-size: 18px; }
+.login-box .brand p { color: var(--text2); font-size: 12px; margin-top: 4px; }
+.error-msg { color: var(--red); font-size: 12px; margin-top: 8px; display: none; }
+/* Pulse dot */
+.dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+.dot.green { background: var(--green); animation: pulse 2s infinite; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; } ::-webkit-scrollbar-track { background: var(--bg2); } ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+/* Section */
+.section { display: none; } .section.active { display: block; }
+.section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+.section-header h2 { font-size: 16px; font-weight: 600; }
+/* Toggle Switch */
+.switch { position: relative; display: inline-block; width: 34px; height: 18px; }
+.switch input { opacity: 0; width: 0; height: 0; }
+.slider { position: absolute; cursor: pointer; inset: 0; background-color: var(--bg3); transition: .3s; border-radius: 34px; border: 1px solid var(--border); }
+.slider:before { position: absolute; content: ""; height: 12px; width: 12px; left: 2px; bottom: 2px; background-color: var(--text2); transition: .3s; border-radius: 50%; }
+input:checked + .slider { background-color: rgba(63,185,80,.2); border-color: var(--green); }
+input:checked + .slider:before { transform: translateX(16px); background-color: var(--green); }
+/* Collapsible Tree View */
+.tree-item { margin: 4px 0; }
+.tree-header { display: flex; align-items: center; gap: 8px; padding: 8px 12px; background: var(--bg3); border-radius: 6px; cursor: pointer; transition: all .15s; }
+.tree-header:hover { background: var(--border); }
+.tree-header .toggle-icon { font-size: 10px; transition: transform .2s; }
+.tree-header.expanded .toggle-icon { transform: rotate(90deg); }
+.tree-content { max-height: 0; overflow: hidden; transition: max-height .3s ease; background: var(--bg2); border-radius: 0 0 6px 6px; }
+.tree-content.show { max-height: 500px; }
+.tree-payload { padding: 12px; font-family: 'Consolas', monospace; font-size: 12px; color: var(--accent); white-space: pre-wrap; word-break: break-all; }
+.clickable-username { color: var(--accent); cursor: pointer; text-decoration: none; }
+.clickable-username:hover { text-decoration: underline; }
+</style>
+</head>
+<body>
+
+<!-- Toast Notifications -->
+<div id="toast-overlay"></div>
+<div id="toast-container">
+    <div class="toast-icon" id="toast-icon">✅</div>
+    <div class="toast-message" id="toast-message">Success!</div>
+</div>
+
+<!-- Success Modal -->
+<div class="overlay" id="modal-success">
+    <div class="modal" style="text-align: center; padding: 40px;">
+        <div style="font-size: 64px; margin-bottom: 20px;">✅</div>
+        <h3 style="font-size: 18px; margin-bottom: 10px; color: var(--accent);">บันทึกสำเร็จ</h3>
+        <p style="color: var(--text2); font-size: 14px; margin-bottom: 24px;" id="success-message">ข้อมูลถูกบันทึกเรียบร้อย</p>
+        <button class="btn btn-primary" onclick="closeModal('modal-success')" style="width: 100%;">ตกลง</button>
+    </div>
+</div>
+
+<!-- Logout Modal -->
+<div class="overlay" id="modal-logout">
+    <div class="modal" style="text-align: center; padding: 40px;">
+        <div style="font-size: 64px; margin-bottom: 20px;">👋</div>
+        <h3 style="font-size: 18px; margin-bottom: 10px; color: var(--accent);">ล็อคเอาท์สำเร็จ</h3>
+        <p style="color: var(--text2); font-size: 14px; margin-bottom: 24px;">คุณได้ล็อคเอาท์ออกจากระบบแล้ว</p>
+        <button class="btn btn-primary" onclick="redirectToLogin()" style="width: 100%;">ตกลง</button>
+    </div>
+</div>
+
+<!-- Login Screen -->
+<div id="login-screen">
+  <div class="login-box">
+    <div class="brand">
+      <h2>🛡️ CMT-IPAS</h2>
+      <p>Industrial Audio Server · Admin Panel</p>
+      <p style="color:var(--text2);font-size:11px;margin-top:4px;">© Chiangmai Micro Technology</p>
+    </div>
+    <div class="form-group">
+      <label>Username</label>
+      <input type="text" id="login-user" placeholder="admin" value="admin">
+    </div>
+    <div class="form-group">
+      <label>Password</label>
+      <input type="password" id="login-pass" placeholder="••••••••">
+    </div>
+    <div id="login-error" class="error-msg">❌ Username หรือ Password ไม่ถูกต้อง</div>
+    <button class="btn btn-primary" style="width:100%;margin-top:8px;" onclick="doLogin()">เข้าสู่ระบบ</button>
+  </div>
+</div>
+
+<!-- App Shell -->
+<div id="sidebar">
+  <div class="logo">
+    <h2>🛡️ CMT-IPAS</h2>
+    <p>Admin Panel v0.1.0</p>
+  </div>
+  <nav>
+    <div class="menu-item active" onclick="switchTab('dashboard')">📊 Dashboard</div>
+    <div class="menu-item" onclick="switchTab('sessions')">👤 Live Sessions</div>
+    <div class="menu-item" onclick="switchTab('channels')">📁 Channels</div>
+    <div class="menu-item" onclick="switchTab('users')">👥 Users</div>
+    <div class="menu-item" onclick="switchTab('mqtt-devices')">📡 MQTT Devices</div>
+    <div class="menu-item" onclick="switchTab('monitor')">📡 Topic Monitor</div>
+    <div class="menu-item" onclick="switchTab('map')">🗺️ Live Map</div>
+    <div class="menu-item" onclick="switchTab('profile')">⚙️ Profile</div>
+    <div class="menu-item" style="color:var(--red)" onclick="switchTab('bans')">🚫 Ban List</div>
+  </nav>
+  <div class="status">
+    <span class="dot green"></span>
+    Server: <span id="sb-port">:14738</span> &nbsp;|&nbsp; API: <span id="sb-api">:19001</span>
+  </div>
+</div>
+
+<div id="main">
+  <div id="topbar">
+    <h1 id="page-title">Dashboard</h1>
+    <div class="actions">
+      <span id="last-refresh" style="font-size:12px; color:var(--text2); margin-right:12px;"></span>
+      <span id="refresh-indicator" style="font-size:12px; color:var(--accent); margin-right:12px;"></span>
+      <button class="btn btn-ghost btn-sm" onclick="refreshAll()">🔄 Refresh</button>
+      <button class="btn btn-danger btn-sm" onclick="logout()">ออกจากระบบ</button>
+    </div>
+  </div>
+  <div id="content">
+
+    <!-- DASHBOARD -->
+    <div class="section active" id="section-dashboard">
+      <div class="cards">
+        <div class="card green"><div class="lbl">Online Sessions</div><div class="val" id="stat-sessions">0</div></div>
+        <div class="card blue"><div class="lbl">Active Channels</div><div class="val" id="stat-channels">0</div></div>
+        <div class="card red"><div class="lbl">Registered Users</div><div class="val" id="stat-users">0</div></div>
+      </div>
+      <div class="table-wrap">
+        <div class="table-header">
+          <h3>📡 Active Sessions</h3>
+        </div>
+        <table>
+          <thead><tr><th>User</th><th>Callsign</th><th>Channel</th><th>IP Address</th><th>Session</th><th>Actions</th></tr></thead>
+          <tbody id="dash-sessions-body"><tr><td colspan="5" style="text-align:center;color:var(--text2);padding:24px;">ไม่มีผู้ใช้ Online</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- SESSIONS -->
+    <div class="section" id="section-sessions">
+      <div class="table-wrap"><table><tbody id="sessions-table"></tbody></table></div>
+    </div>
+
+    <!-- CHANNELS -->
+    <div class="section" id="section-channels">
+      <div class="section-header">
+        <h2>📂 Channels</h2>
+        <button class="btn btn-primary btn-sm" onclick="openCreateChannel()">+ สร้างห้อง</button>
+      </div>
+      <div class="table-wrap"><table><tbody id="channels-table"></tbody></table></div>
+    </div>
+
+    <!-- MY INVITED CHANNELS -->
+    <div class="section" id="section-invited-channels">
+      <div class="section-header">
+        <h2>🔒 ห้องที่ฉันถูกเชิญ</h2>
+      </div>
+      <div class="table-wrap"><table><tbody id="invited-channels-table"></tbody></table></div>
+    </div>
+
+    <!-- USERS -->
+    <div class="section" id="section-users">
+      <div class="section-header">
+        <h2>👥 Users</h2>
+        <button class="btn btn-primary btn-sm" onclick="openCreateUser()">+ เพิ่มผู้ใช้</button>
+      </div>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Username</th><th>Callsign</th><th>Actions</th></tr></thead>
+        <tbody id="users-table"></tbody>
+      </table></div>
+    </div>
+    
+    <!-- MQTT DEVICES -->
+    <div class="section" id="section-mqtt-devices">
+      <div class="section-header">
+        <h2>📡 MQTT Device Management</h2>
+        <button class="btn btn-primary btn-sm" onclick="openCreateMqttDevice()">+ เพิ่มอุปกรณ์ใหม่</button>
+      </div>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Username</th><th>Status</th><th>Comment</th><th>Actions</th></tr></thead>
+        <tbody id="mqtt-devices-table"></tbody>
+      </table></div>
+    </div>
+
+    <!-- SUBSCRIPTIONS -->
+    <div class="section" id="section-subscriptions">
+      <div class="section-header">
+        <h2>📋 Device Subscriptions</h2>
+        <div style="display: flex; gap: 8px;">
+          <button class="btn btn-primary btn-sm" onclick="openAddSubscription()">+ เพิ่ม Subscription</button>
+          <button class="btn btn-ghost btn-sm" onclick="requestSubscriptionReport()">📡 ขอรายงานจาก Device</button>
+          <button class="btn btn-ghost btn-sm" onclick="backToMqttDevices()">← กลับไป MQTT Devices</button>
+        </div>
+      </div>
+      <div id="subscriptions-user-info" style="margin-bottom: 16px; padding: 12px; background: var(--bg3); border-radius: 8px; display: none;">
+        <span style="color: var(--text2); font-size: 12px;">Device:</span>
+        <strong id="subscriptions-username" style="color: var(--accent);"></strong>
+      </div>
+      <div id="subscriptions-list"></div>
+    </div>
+
+    <!-- MONITOR -->
+    <div class="section" id="section-monitor">
+      <div class="section-header">
+        <h2>📡 Topic Monitor</h2>
+        <button class="btn btn-ghost btn-sm" onclick="loadTopics()">🔄 Refresh</button>
+      </div>
+      <div id="topics-list"></div>
+    </div>
+
+    <!-- BANS -->
+    <div class="section" id="section-bans">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+        <h2 style="font-size:16px; color:var(--red);">🚫 Banned Entities</h2>
+        <button class="btn btn-sm btn-ghost">Add Ban</button>
+      </div>
+      <div class="table-container">
+        <table>
+          <thead><tr><th>TARGET</th><th>TYPE</th><th>REASON</th><th>EXPIRES</th><th>ACTIONS</th></tr></thead>
+          <tbody id="tb-bans"><tr><td colspan="5" class="empty-state">No active bans</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- MAP -->
+    <div class="section" id="section-map" style="height: calc(100vh - 120px); position: relative;">
+      <div id="map" style="width: 100%; height: 100%; border-radius: 12px; border: 1px solid var(--border);"></div>
+    </div>
+
+    <!-- PROFILE -->
+    <div class="section" id="section-profile">
+      <h2 style="font-size:16px; margin-bottom:16px;">⚙️ Profile Settings</h2>
+      <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 24px;">
+          <div style="background:var(--bg2); border:1px solid var(--border); border-radius:12px; padding:24px;">
+              <h3 style="font-size:14px; margin-bottom:16px;">Personal Information</h3>
+              <div class="form-group"><label>Username</label><input type="text" id="prof-username" disabled style="opacity:0.7"></div>
+              <div class="form-group"><label>Role</label><input type="text" id="prof-role" disabled style="opacity:0.7"></div>
+              <div class="form-group"><label>Callsign (Display Name)</label><input type="text" id="prof-callsign" placeholder="e.g. HS5XXX"></div>
+              <button class="btn btn-primary" onclick="updateProfile()">Save Profile</button>
+          </div>
+          <div style="background:var(--bg2); border:1px solid var(--border); border-radius:12px; padding:24px;">
+              <h3 style="font-size:14px; margin-bottom:16px;">Change Password</h3>
+              <div class="form-group"><label>New Password</label><input type="password" id="prof-pwd-new" placeholder="At least 8 characters"></div>
+              <div class="form-group"><label>Confirm Password</label><input type="password" id="prof-pwd-confirm" placeholder="Type again"></div>
+              <button class="btn btn-primary" style="background:var(--yellow); color:#000;" onclick="updateProfilePassword()">Change Password</button>
+          </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- MODALS -->
+<div class="overlay" id="modal-channel">
+    <div class="modal">
+        <h3>📂 สร้างห้องใหม่</h3>
+        <div class="form-group"><label>ชื่อห้อง</label><input type="text" id="ch-name" placeholder="ระบุชื่อห้อง"></div>
+        <div class="form-group"><label>รหัสผ่านห้อง (ไม่บังคับ)</label><input type="password" id="ch-password" placeholder="เว้นว่างถ้าไม่ต้องการตั้งรหัสผ่าน"></div>
+        <div class="modal-footer">
+            <button class="btn btn-ghost" onclick="closeModal('modal-channel')">ยกเลิก</button>
+            <button class="btn btn-primary" onclick="createChannel()">สร้างห้อง</button>
+        </div>
+    </div>
+</div>
+
+<div class="overlay" id="modal-move">
+    <div class="modal">
+        <h3>↗ ย้ายผู้ใช้</h3>
+        <p style="font-size:12px; color:var(--text2); margin-bottom:12px;">เลือกห้องปลายทางสำหรับ <span id="move-session-label" style="color:var(--accent);"></span></p>
+        <div class="form-group"><label>ไปที่ห้อง</label><select id="move-channel-select" onchange="checkChannelPassword()"></select></div>
+        <div class="form-group" id="move-password-group" style="display:none;"><label>รหัสผ่านห้อง</label><input type="password" id="move-password" placeholder="ระบุรหัสผ่านห้อง"></div>
+        <div class="modal-footer">
+            <button class="btn btn-ghost" onclick="closeModal('modal-move')">ยกเลิก</button>
+            <button class="btn btn-primary" onclick="confirmMove()">ยืนยันการย้าย</button>
+        </div>
+    </div>
+</div>
+
+<div class="overlay" id="modal-edit-channel">
+    <div class="modal">
+        <h3>🔒 แก้ได้รหัสผ่านห้อง</h3>
+        <p style="font-size:12px; color:var(--text2); margin-bottom:12px;">ห้อง: <span id="edit-channel-name" style="color:var(--accent);"></span></p>
+        <input type="hidden" id="edit-channel-id">
+        <div class="form-group"><label>รหัสผ่านห้อง (เว้นว่างถ้าต้องการลบรหัสผ่าน)</label><input type="password" id="edit-channel-password" placeholder="ระบุรหัสผ่านใหม่หรือเว้นว่างเพื่อลบ"></div>
+        <div class="modal-footer">
+            <button class="btn btn-ghost" onclick="closeModal('modal-edit-channel')">ยกเลิก</button>
+            <button class="btn btn-primary" onclick="updateChannelPassword()">บันทึก</button>
+        </div>
+    </div>
+</div>
+
+<div class="overlay" id="modal-invite-user">
+    <div class="modal">
+        <h3>📧 เชิญผู้ใช้จากห้อง Public เข้าห้องส่วนตัว</h3>
+        <p style="font-size:12px; color:var(--text2); margin-bottom:12px;">จากห้อง: <span id="invite-channel-name" style="color:var(--accent);"></span></p>
+        <input type="hidden" id="invite-channel-id">
+        <div class="form-group"><label>เลือกห้องส่วนตัว</label><select id="invite-private-channel-select"></select></div>
+        <div class="modal-footer">
+            <button class="btn btn-ghost" onclick="closeModal('modal-invite-user')">ยกเลิก</button>
+            <button class="btn btn-primary" onclick="inviteChannel()">เชิญ</button>
+        </div>
+    </div>
+</div>
+
+<div class="overlay" id="modal-pwd">
+    <div class="modal">
+        <h3 style="color:var(--yellow);">⚠️ บังคับเปลี่ยนรหัสผ่าน</h3>
+        <p style="font-size:12px; color:var(--text2); margin-bottom:16px;">นี่คือการล็อคอินครั้งแรก กรุณาเปลี่ยนรหัสผ่านเพื่อความปลอดภัย</p>
+        <div class="form-group"><label>รหัสผ่านใหม่</label><input type="password" id="new-pwd" placeholder="ขั้นต่ำ 8 ตัวอักษร"></div>
+        <div class="form-group"><label>ยืนยันรหัสผ่าน</label><input type="password" id="confirm-pwd" placeholder="ระบุอีกครั้ง"></div>
+        <div id="pwd-error" class="error-msg" style="margin-bottom:12px;"></div>
+        <button class="btn btn-primary" style="width:100%; background:var(--yellow); color:#000;" onclick="changePassword()">บันทึกรหัสผ่านใหม่</button>
+    </div>
+</div>
+
+<div class="overlay" id="modal-user">
+    <div class="modal">
+        <h3 id="user-modal-title">👥 เพิ่มผู้ใช้ใหม่</h3>
+        <div class="form-group"><label>Username</label><input type="text" id="u-username" placeholder="ระบุชื่อผู้ใช้"></div>
+        <div class="form-group"><label>Password</label><input type="password" id="u-password" placeholder="ระบุรหัสผ่าน (เว้นว่างถ้าไม่ต้องการเปลี่ยน)"></div>
+        <div class="form-group"><label>Callsign</label><input type="text" id="u-callsign" placeholder="ระบุคอลไซน์"></div>
+        <div class="form-group">
+            <label>Role</label>
+            <select id="u-role">
+                <option value="User">User</option>
+                <option value="Operator">Operator</option>
+                <option value="Admin">Admin</option>
+                <option value="Super Admin">Super Admin</option>
+            </select>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-ghost" onclick="closeModal('modal-user')">ยกเลิก</button>
+            <button class="btn btn-primary" id="btn-save-user" onclick="saveUser()">บันทึกข้อมูล</button>
+        </div>
+    </div>
+</div>
+
+<div class="overlay" id="modal-mqtt-device">
+    <div class="modal">
+        <h3 id="mqtt-modal-title">📡 จัดการอุปกรณ์ MQTT</h3>
+        <div class="form-group"><label>Username</label><input type="text" id="mq-username" placeholder="เช่น telemetry_01"></div>
+        <div class="form-group"><label>Password</label><input type="password" id="mq-password" placeholder="ระบุรหัสผ่าน"></div>
+        <div class="form-group"><label>หมายเหตุ / Comment</label><input type="text" id="mq-comment" placeholder="เช่น จุดวัดน้ำหน้าเขื่อน"></div>
+        <div class="modal-footer">
+            <button class="btn btn-ghost" onclick="closeModal('modal-mqtt-device')">ยกเลิก</button>
+            <button class="btn btn-primary" onclick="saveMqttDevice()">บันทึกข้อมูล</button>
+        </div>
+    </div>
+</div>
+
+<div class="overlay" id="modal-confirm">
+    <div class="modal" style="width: 320px; border-color: var(--red);">
+        <h3 style="color:var(--red);">⚠️ ยืนยันการลบ</h3>
+        <p id="confirm-msg" style="font-size:13px; color:var(--text2); line-height:1.6; margin-bottom:20px;"></p>
+        <div class="modal-footer">
+            <button class="btn btn-ghost" onclick="closeModal('modal-confirm')">ยกเลิก</button>
+            <button class="btn btn-danger" id="btn-confirm-action" style="background:var(--red); color:#fff;">ยืนยันลบทันที</button>
+        </div>
+    </div>
+</div>
+
+<div class="overlay" id="modal-subscription">
+    <div class="modal">
+        <h3>📋 เพิ่ม Subscription</h3>
+        <div class="form-group"><label>Topic</label><input type="text" id="sub-topic" placeholder="เช่น cmt/nodes/telemetry"></div>
+        <div class="form-group"><label>QoS</label>
+            <select id="sub-qos">
+                <option value="0">0 - At most once</option>
+                <option value="1">1 - At least once</option>
+                <option value="2">2 - Exactly once</option>
+            </select>
+        </div>
+        <div class="form-group"><label>Payload (ตัวอย่าง - ไม่บังคับ)</label><input type="text" id="sub-payload" placeholder="JSON payload ตัวอย่าง"></div>
+        <div class="modal-footer">
+            <button class="btn btn-ghost" onclick="closeModal('modal-subscription')">ยกเลิก</button>
+            <button class="btn btn-primary" onclick="saveSubscription()">บันทึก</button>
+        </div>
+    </div>
+</div>
+
+<script>
+const API = '/api/v1/auth';
+let token = localStorage.getItem('cmt_token') || '';
+let currentUserRole = 'User';
+let moveTargetSession = null;
+let channelList = [];
+
+// ── UI Helpers ───────────────────────────────────────────────────────
+function showSuccessModal(message = 'ข้อมูลถูกบันทึกเรียบร้อย') {
+    document.getElementById('success-message').textContent = message;
+    document.getElementById('modal-success').classList.add('show');
+}
+
+function showToast(message, type = 'success') {
+    const overlay = document.getElementById('toast-overlay');
+    const container = document.getElementById('toast-container');
+    const iconElement = document.getElementById('toast-icon');
+    const messageElement = document.getElementById('toast-message');
+
+    // Clear any existing timeout
+    if (window.toastTimeout) {
+        clearTimeout(window.toastTimeout);
+    }
+
+    // Remove any old toast elements
+    const oldToasts = container.querySelectorAll('.toast');
+    oldToasts.forEach(toast => toast.remove());
+
+    iconElement.textContent = type === 'success' ? '✅' : '❌';
+    messageElement.textContent = message;
+
+    overlay.style.display = 'block';
+
+    // Click outside to close
+    overlay.onclick = () => {
+        overlay.style.display = 'none';
+        if (window.toastTimeout) clearTimeout(window.toastTimeout);
+    };
+
+    window.toastTimeout = setTimeout(() => {
+        overlay.style.display = 'none';
+    }, 3000);
+}
+
+// ── Auth ───────────────────────────────────────────────────────────
+async function doLogin() {
+  const u = document.getElementById('login-user').value.trim();
+  const p = document.getElementById('login-pass').value.trim();
+  try {
+    const r = await fetch(`${API}/login`, {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({username:u, password:p})
+    });
+    const d = await r.json();
+    if (!r.ok) {
+        throw new Error(d.error || 'Unknown error');
+    }
+    token = d.token;
+    localStorage.setItem('cmt_token', token);
+
+    // Store user role for permission checks
+    currentUserRole = d.role || 'User';
+
+    // Check if password change is required
+    if (d.must_change_password) {
+        openPwdModal();
+    }
+
+    document.getElementById('login-screen').style.display = 'none';
+    startAutoRefresh();
+    refreshAll();
+  } catch (err) {
+    const el = document.getElementById('login-error');
+    el.innerHTML = `❌ ${err.message}`;
+    el.style.display = 'block';
+    setTimeout(() => el.style.display = 'none', 10000);
+  }
+}
+
+function logout() {
+  localStorage.removeItem('cmt_token');
+  token = '';
+  currentUserRole = 'User';
+  document.getElementById('modal-logout').classList.add('show');
+}
+
+function redirectToLogin() {
+  closeModal('modal-logout');
+  document.getElementById('login-screen').style.display = 'flex';
+}
+
+function switchTab(name) {
+  // Stop monitor polling if leaving monitor tab
+  if (name !== 'monitor') {
+    stopMonitorPolling();
+  }
+
+  // Role check for Monitor tab (admin only)
+  const isAdmin = currentUserRole === 'Super Admin' || currentUserRole === 'Admin';
+  if (name === 'monitor' && !isAdmin) {
+    showToast('คุณไม่มีสิทธิ์เข้าถึงหน้านี้', 'error');
+    return;
+  }
+
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('#sidebar nav .menu-item').forEach(a => a.classList.remove('active'));
+  document.getElementById('section-'+name).classList.add('active');
+  event.currentTarget.classList.add('active');
+  const titles = {dashboard:'Dashboard',sessions:'Live Sessions',channels:'Channels',users:'Users','mqtt-devices':'MQTT Devices',monitor:'Topic Monitor',bans:'Ban List',profile:'Profile Settings'};
+  document.getElementById('page-title').textContent = titles[name];
+  if (name === 'sessions') loadSessions();
+  if (name === 'channels') { loadChannels(); loadUserInvitations(); }
+  if (name === 'users') loadUsers();
+  if (name === 'mqtt-devices') loadMqttDevices();
+  if (name === 'monitor') startMonitorPolling();
+  if (name === 'map') initMap();
+  if (name === 'profile') loadProfile();
+}
+
+let map = null;
+let markers = {};
+
+function initMap() {
+    if (map) {
+        setTimeout(() => map.invalidateSize(), 100);
+        return;
+    }
+    // Default to Chiang Mai center
+    map = L.map('map').setView([18.788, 98.985], 13);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap'
+    }).addTo(map);
+    
+    updateMapMarkers();
+    setInterval(updateMapMarkers, 5000);
+}
+
+async function updateMapMarkers() {
+    if (!token) return;
+    const nodes = await api('/nodes/locations');
+    if (!nodes) return;
+    
+    nodes.forEach(n => {
+        const pos = [n.lat, n.lon];
+        if (markers[n.callsign]) {
+            markers[n.callsign].setLatLng(pos);
+        } else {
+            const marker = L.marker(pos).addTo(map)
+                .bindPopup(`<b>${n.callsign}</b><br>Status: ${n.status_code}<br>Seen: ${new Date(n.last_seen).toLocaleString()}`);
+            markers[n.callsign] = marker;
+        }
+    });
+}
+
+async function api(path, method='GET', body=null) {
+  const opts = { method, headers: {'Authorization':'Bearer '+token, 'Content-Type':'application/json'} };
+  if (body) opts.body = JSON.stringify(body);
+  const r = await fetch(API + path, opts);
+  if (r.status === 401) { logout(); return null; }
+  if (!r.ok) return null;
+  
+  // Handle empty responses (204 No Content or simple 200/201 without JSON)
+  const text = await r.text();
+  if (!text) return true; 
+  try { return JSON.parse(text); } catch(e) { return true; }
+}
+
+// ── Data Loaders ───────────────────────────────────────────────────
+async function loadSessions() {
+  const data = await api('/sessions');
+  if (!data) return;
+  channelList = await api('/channels') || [];
+  const tbody = document.getElementById('sessions-table');
+  const dbody = document.getElementById('dash-sessions-body');
+  
+  const elSessions = document.getElementById('stat-sessions');
+  if (elSessions) elSessions.textContent = data.length;
+  
+  const elRefresh = document.getElementById('last-refresh');
+  if (elRefresh) elRefresh.textContent = '⏱ ' + new Date().toLocaleTimeString('th');
+
+  const rows = data.map(s => {
+    const chName = channelList.find(c => c.id === s.channel_id)?.name || (s.channel_id === 0 ? 'Root (Lobby)' : `Ch.${s.channel_id}`);
+    return `<tr>
+      <td><strong>${s.username}</strong></td>
+      <td><span style="color:var(--yellow);font-weight:600;">${s.callsign || '—'}</span></td>
+      <td><span class="badge ${s.channel_id === 0 ? 'offline' : 'online'}">${chName}</span></td>
+      <td style="color:var(--text2);font-family:monospace;">—</td>
+      <td style="color:var(--text2);font-family:monospace;">Session #${s.session_id}</td>
+      <td><button class="btn btn-ghost btn-sm" onclick="openMove(${s.session_id},'${s.username}')">↗ Move</button></td>
+    </tr>`;
+  });
+  const html = rows.length ? rows.join('') : '<tr><td colspan="5" style="text-align:center;color:var(--text2);padding:24px;">ไม่มีผู้ใช้ Online</td></tr>';
+  if (tbody) tbody.innerHTML = html.replace(/Session #\d+.*?—/g, (m) => m);
+  if (dbody) dbody.innerHTML = rows.length ? data.map(s => {
+    const chName = channelList.find(c => c.id === s.channel_id)?.name || (s.channel_id === 0 ? 'Root (Lobby)' : `Ch.${s.channel_id}`);
+    return `<tr>
+      <td><strong>${s.username}</strong></td>
+      <td><span style="color:var(--yellow);font-weight:600;">${s.callsign || '—'}</span></td>
+      <td>${chName}</td>
+      <td style="font-family:monospace;color:var(--text2);">—</td>
+      <td style="font-family:monospace;color:var(--text2);">#${s.session_id}</td>
+      <td><button class="btn btn-ghost btn-sm" onclick="openMove(${s.session_id},'${s.username}')">↗ Move</button></td>
+    </tr>`;
+  }).join('') : '<tr><td colspan="6" style="text-align:center;color:var(--text2);padding:24px;">ไม่มีผู้ใช้ Online</td></tr>';
+}
+
+async function loadChannels() {
+  const data = await api('/channels');
+  if (!data) return;
+  channelList = data;
+  const elChannels = document.getElementById('stat-channels');
+  if (elChannels) elChannels.textContent = data.length;
+  const tbody = document.getElementById('channels-table');
+
+  // Load users for each channel
+  const channelUsers = {};
+  for (const c of data) {
+    const users = await api(`/channels/${c.id}/users`) || [];
+    channelUsers[c.id] = users;
+  }
+
+  // Get saved expand state
+  const expandedChannels = JSON.parse(localStorage.getItem('expandedChannels') || '{}');
+
+  tbody.innerHTML = data.length ? data.map(c => {
+    const users = channelUsers[c.id] || [];
+    const isExpanded = expandedChannels[c.id] || false;
+    const usersHtml = users.length ? users.map(u => `<div style="display:flex;align-items:center;justify-content:space-between;padding:6px 0;font-size:14px;color:var(--text2);"><span>👤 ${u.username}</span><div style="display:flex;gap:6px;">${!c.has_password ? `<button class="btn btn-sm btn-ghost" onclick="openInviteUser(${c.id}, '${c.name}', '${u.username}')">📧</button>` : ''}<button class="btn btn-sm btn-ghost" onclick="kickUserFromChannel(${c.id}, '${u.username}')">🚫</button><button class="btn btn-sm btn-ghost" onclick="openMove(${u.session_id},'${u.username}')">↗</button></div></div>`).join('') : '<div style="padding:6px 0;font-size:14px;color:var(--text2);">ไม่มีผู้ใช้</div>';
+    return `<tr>
+      <td style="font-family:monospace;color:var(--text2);">${c.id}</td>
+      <td>
+        <div style="display:flex;align-items:center;gap:12px;">
+          <strong>${c.name}</strong> ${c.has_password ? '🔒' : ''}
+          <button class="btn btn-sm btn-ghost" onclick="toggleChannelUsers(${c.id})">▼</button>
+        </div>
+        <div id="channel-users-${c.id}" style="display:${isExpanded ? 'block' : 'none'};margin-left:16px;margin-top:8px;border-left:2px solid var(--border);padding-left:8px;">${usersHtml}</div>
+      </td>
+      <td><span class="badge ${c.id === 0 ? 'offline' : (c.has_password ? 'private' : 'public')}">${c.has_password ? 'Private' : 'Public'}</span></td>
+      <td>${c.id !== 0 ? `<button class="btn btn-sm btn-ghost" onclick="openEditChannel(${c.id}, '${c.name}', ${c.has_password})">แก้ได้</button> ${!c.has_password && users.length ? `<button class="btn btn-sm btn-ghost" onclick="openInviteChannel(${c.id}, '${c.name}')">📧 เชิญทั้งห้อง</button>` : ''}` : '<span style="color:var(--text2);font-size:12px;">—</span>'}</td>
+    </tr>`;
+  }).join('') : '<tr><td colspan="4" style="text-align:center;color:var(--text2);padding:24px;">ยังไม่มีห้อง</td></tr>';
+}
+
+function toggleChannelUsers(channelId) {
+  const div = document.getElementById(`channel-users-${channelId}`);
+  const isExpanded = div.style.display === 'none';
+  div.style.display = isExpanded ? 'block' : 'none';
+
+  // Save expand state
+  const expandedChannels = JSON.parse(localStorage.getItem('expandedChannels') || '{}');
+  if (isExpanded) {
+    expandedChannels[channelId] = true;
+  } else {
+    delete expandedChannels[channelId];
+  }
+  localStorage.setItem('expandedChannels', JSON.stringify(expandedChannels));
+}
+
+async function loadUserInvitations() {
+  const username = currentUserRole === 'admin' ? 'admin' : 'user';
+  const data = await api(`/users/${username}/invitations`);
+  if (!data) return;
+  const tbody = document.getElementById('invited-channels-table');
+  tbody.innerHTML = data.invitations.length ? data.invitations.map(inv => `<tr>
+    <td style="font-family:monospace;color:var(--text2);">${inv.channel_id}</td>
+    <td><strong>${inv.channel_name}</strong> 🔒</td>
+    <td><span style="color:var(--text2);font-size:12px;">เชิญโดย ${inv.invited_by}</span></td>
+    <td><button class="btn btn-sm btn-primary" onclick="moveToChannel(${inv.channel_id})">เข้าห้อง</button></td>
+  </tr>`).join('') : '<tr><td colspan="4" style="text-align:center;color:var(--text2);padding:24px;">ยังไม่มีการเชิญ</td></tr>';
+}
+
+async function moveToChannel(channelId) {
+  // Find current session ID (for admin moving themselves)
+  const sessions = await api('/sessions') || [];
+  const mySession = sessions.find(s => s.username === (currentUserRole === 'admin' ? 'admin' : 'user'));
+  if (!mySession) {
+    alert('ไม่พบ session ของคุณ');
+    return;
+  }
+  const r = await api(`/sessions/${mySession.session_id}/move`, 'POST', { channel_id: channelId });
+  if (r) {
+    showSuccessModal('เข้าห้องสำเร็จ');
+    loadChannels();
+    loadUserInvitations();
+  }
+  else alert('เข้าห้องไม่สำเร็จ');
+}
+
+async function kickUserFromChannel(channelId, username) {
+  if (!confirm(`ต้องการเตะ ${username} ออกจากห้องนี้?`)) return;
+
+  // Find user's session ID
+  const sessions = await api('/sessions') || [];
+  const userSession = sessions.find(s => s.username === username);
+  if (!userSession) {
+    alert('ไม่พบ session ของผู้ใช้');
+    return;
+  }
+
+  // Move user to lobby (channel 0)
+  const moveResult = await api(`/sessions/${userSession.session_id}/move`, 'POST', { channel_id: 0 });
+
+  // Delete invitation
+  const deleteResult = await api(`/channels/${channelId}/invitations/${username}`, 'DELETE');
+
+  if (moveResult && deleteResult) {
+    showSuccessModal('เตะผู้ใช้ออกจากห้องสำเร็จ');
+    loadChannels();
+  }
+  else alert('เตะผู้ใช้ออกจากห้องไม่สำเร็จ');
+}
+
+async function loadUsers() {
+  const data = await api('/users');
+  if (!data) return;
+  const tbody = document.getElementById('users-table');
+  if (tbody) tbody.innerHTML = data.length ? data.map(u => `<tr>
+    <td><strong>${u.username}</strong></td>
+    <td><span style="color:var(--yellow);">${u.callsign || '—'}</span></td>
+    <td>
+        <button class="btn btn-ghost btn-sm" onclick="openEditUser('${u.username}', '${u.callsign || ''}')">แก้ไข</button>
+        ${u.username !== 'admin' ? `<button class="btn btn-danger btn-sm" onclick="deleteUser('${u.username}')">ลบ</button>` : ''}
+    </td>
+  </tr>`).join('') : '<tr><td colspan="3" style="text-align:center;color:var(--text2);padding:24px;">—</td></tr>';
+}
+
+let editingUsername = null;
+
+function openCreateUser() {
+    editingUsername = null;
+    document.getElementById('user-modal-title').textContent = '👥 เพิ่มผู้ใช้ใหม่';
+    document.getElementById('u-username').value = '';
+    document.getElementById('u-username').disabled = false;
+    document.getElementById('u-password').value = '';
+    document.getElementById('u-callsign').value = '';
+    document.getElementById('u-role').value = 'User';
+    document.getElementById('modal-user').classList.add('show');
+}
+
+function openEditUser(username, callsign) {
+    editingUsername = username;
+    document.getElementById('user-modal-title').textContent = `⚙️ แก้ไขผู้ใช้: ${username}`;
+    document.getElementById('u-username').value = username;
+    document.getElementById('u-username').disabled = true;
+    document.getElementById('u-password').value = '';
+    document.getElementById('u-callsign').value = callsign;
+    document.getElementById('modal-user').classList.add('show');
+}
+
+async function saveUser() {
+    const u = document.getElementById('u-username').value.trim();
+    const p = document.getElementById('u-password').value;
+    const c = document.getElementById('u-callsign').value.trim();
+    const r = document.getElementById('u-role').value;
+
+    if (!editingUsername && (!u || !p)) return showToast('กรุณากรอก Username และ Password', 'error');
+
+    let res;
+    if (editingUsername) {
+        // Update
+        res = await api(`/users/${editingUsername}`, 'POST', {
+            password: p || null,
+            role: r,
+            callsign: c || null
+        });
+    } else {
+        // Create
+        res = await api('/users', 'POST', {
+            username: u,
+            password: p,
+            role: r,
+            callsign: c || null
+        });
+    }
+
+    if (res) {
+        closeModal('modal-user');
+        showSuccessModal(editingUsername ? 'อัปเดตข้อมูลสำเร็จ' : 'เพิ่มผู้ใช้สำเร็จ');
+        loadUsers();
+    } else {
+        showToast('เกิดข้อผิดพลาดในการบันทึก', 'error');
+    }
+}
+
+async function deleteUser(username) {
+    if (!confirm(`คุณต้องการลบผู้ใช้ ${username} ใช่หรือไม่?`)) return;
+    const res = await api(`/users/${username}`, 'DELETE');
+    if (res) {
+        showSuccessModal('ลบผู้ใช้แล้ว');
+        loadUsers();
+    } else {
+        showToast('ไม่สามารถลบผู้ใช้ได้', 'error');
+    }
+}
+
+async function refreshAll() {
+  const ind = document.getElementById('refresh-indicator');
+  if (ind) ind.textContent = '⏳ กำลังโหลด...';
+  await loadSessions();
+  await loadChannels();
+  await loadUsers();
+  if (ind) ind.textContent = '✅ อัปเดตแล้ว';
+  setTimeout(() => { if (ind) ind.textContent = ''; }, 2000);
+}
+
+function startAutoRefresh() {
+  setInterval(refreshAll, 5000);
+}
+
+// ── Channels ───────────────────────────────────────────────────────
+function openCreateChannel() { document.getElementById('modal-channel').classList.add('show'); }
+
+async function createChannel() {
+  const name = document.getElementById('ch-name').value.trim();
+  const password = document.getElementById('ch-password').value.trim();
+  if (!name) return alert('กรุณาใส่ชื่อห้อง');
+  const r = await api('/channels', 'POST', { name, password: password || null });
+  if (r) {
+    closeModal('modal-channel');
+    document.getElementById('ch-name').value = '';
+    document.getElementById('ch-password').value = '';
+    loadChannels();
+  }
+}
+
+// ── Move User ──────────────────────────────────────────────────────
+async function openMove(sessionId, username) {
+  moveTargetSession = sessionId;
+  document.getElementById('move-session-label').textContent = `${username} (#${sessionId})`;
+  const chs = await api('/channels') || [];
+  channelList = chs;
+  const sel = document.getElementById('move-channel-select');
+  sel.innerHTML = chs.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+  document.getElementById('move-password').value = '';
+  document.getElementById('move-password-group').style.display = 'none';
+  document.getElementById('modal-move').classList.add('show');
+  checkChannelPassword();
+}
+
+function checkChannelPassword() {
+  const chId = parseInt(document.getElementById('move-channel-select').value);
+  const channel = channelList.find(c => c.id === chId);
+  const pwdGroup = document.getElementById('move-password-group');
+  if (channel && channel.has_password) {
+    pwdGroup.style.display = 'block';
+  } else {
+    pwdGroup.style.display = 'none';
+  }
+}
+
+async function confirmMove() {
+  const chId = parseInt(document.getElementById('move-channel-select').value);
+  const password = document.getElementById('move-password').value.trim();
+  const channel = channelList.find(c => c.id === chId);
+  const payload = { channel_id: chId };
+  if (channel && channel.has_password) {
+    payload.password = password || null;
+  }
+  const r = await api(`/sessions/${moveTargetSession}/move`, 'POST', payload);
+  if (r) { closeModal('modal-move'); refreshAll(); }
+  else alert('ย้าย User ไม่สำเร็จ');
+}
+
+// ── Edit Channel Password ─────────────────────────────────────────────
+function openEditChannel(id, name, hasPassword) {
+  document.getElementById('edit-channel-id').value = id;
+  document.getElementById('edit-channel-name').textContent = name;
+  document.getElementById('edit-channel-password').value = '';
+  document.getElementById('modal-edit-channel').classList.add('show');
+}
+
+async function updateChannelPassword() {
+  const id = document.getElementById('edit-channel-id').value;
+  const password = document.getElementById('edit-channel-password').value.trim();
+  const r = await api(`/channels/${id}`, 'POST', { password: password || null });
+  if (r) {
+    closeModal('modal-edit-channel');
+    showSuccessModal('แก้ได้รหัสผ่านห้องสำเร็จ');
+    loadChannels();
+  }
+  else alert('แก้ได้รหัสผ่านห้องไม่สำเร็จ');
+}
+
+// ── Invite Channel to Channel ─────────────────────────────────────────────
+async function openInviteChannel(sourceChannelId, sourceChannelName) {
+  document.getElementById('invite-channel-id').value = sourceChannelId;
+  document.getElementById('invite-channel-name').textContent = sourceChannelName;
+  const channels = await api('/channels') || [];
+  const privateChannels = channels.filter(c => c.has_password && c.id !== 0);
+  const sel = document.getElementById('invite-private-channel-select');
+  sel.innerHTML = privateChannels.length ? privateChannels.map(c => `<option value="${c.id}">${c.name}</option>`).join('') : '<option value="">ไม่มีห้องส่วนตัว</option>';
+  document.getElementById('modal-invite-user').classList.add('show');
+}
+
+async function inviteChannel() {
+  const sourceChannelId = document.getElementById('invite-channel-id').value;
+  const targetChannelId = document.getElementById('invite-private-channel-select').value;
+  if (!targetChannelId) {
+    alert('กรุณาเลือกห้องส่วนตัว');
+    return;
+  }
+  const r = await api(`/channels/${sourceChannelId}/invite-to/${targetChannelId}`, 'POST', {});
+  if (r) {
+    closeModal('modal-invite-user');
+    showSuccessModal('เชิญผู้ใช้สำเร็จ');
+  }
+  else alert('เชิญผู้ใช้ไม่สำเร็จ');
+}
+
+// ── Invite Individual User ─────────────────────────────────────────────
+async function openInviteUser(sourceChannelId, sourceChannelName, username) {
+  document.getElementById('invite-channel-id').value = sourceChannelId;
+  document.getElementById('invite-channel-name').textContent = `เชิญ ${username} จากห้อง ${sourceChannelName}`;
+  const channels = await api('/channels') || [];
+  const privateChannels = channels.filter(c => c.has_password && c.id !== 0);
+  const sel = document.getElementById('invite-private-channel-select');
+  sel.innerHTML = privateChannels.length ? privateChannels.map(c => `<option value="${c.id}">${c.name}</option>`).join('') : '<option value="">ไม่มีห้องส่วนตัว</option>';
+  document.getElementById('modal-invite-user').classList.add('show');
+  // Store username for individual invite
+  window.inviteUsername = username;
+}
+
+async function inviteChannel() {
+  const sourceChannelId = document.getElementById('invite-channel-id').value;
+  const targetChannelId = document.getElementById('invite-private-channel-select').value;
+  if (!targetChannelId) {
+    alert('กรุณาเลือกห้องส่วนตัว');
+    return;
+  }
+  
+  let r;
+  if (window.inviteUsername) {
+    // Invite individual user
+    r = await api(`/channels/${targetChannelId}/invitations`, 'POST', { channel_id: parseInt(targetChannelId), username: window.inviteUsername });
+    window.inviteUsername = null;
+  } else {
+    // Invite all users from channel
+    r = await api(`/channels/${sourceChannelId}/invite-to/${targetChannelId}`, 'POST', {});
+  }
+  
+  if (r) {
+    closeModal('modal-invite-user');
+    showSuccessModal('เชิญผู้ใช้สำเร็จ');
+  }
+  else alert('เชิญผู้ใช้ไม่สำเร็จ');
+}
+
+// ── Modals ─────────────────────────────────────────────────────────
+function closeModal(id) { document.getElementById(id).classList.remove('show'); }
+document.querySelectorAll('.overlay').forEach(o => o.addEventListener('click', e => { 
+    if (e.target === o && o.id !== 'modal-pwd') o.classList.remove('show'); // Force password modal to stay open if clicked outside
+}));
+
+function openPwdModal() {
+    document.getElementById('new-pwd').value = '';
+    document.getElementById('confirm-pwd').value = '';
+    document.getElementById('pwd-error').style.display = 'none';
+    document.getElementById('modal-pwd').classList.add('show');
+}
+
+function showToast(message, type = 'success') {
+    const t = document.getElementById('toast-container');
+    const icon = document.getElementById('toast-icon');
+    const msg = document.getElementById('toast-message');
+    
+    if (type === 'success') {
+        icon.innerHTML = '✅';
+        icon.style.color = 'var(--green)';
+    } else {
+        icon.innerHTML = '❌';
+        icon.style.color = 'var(--red)';
+    }
+    
+    msg.textContent = message;
+    t.classList.add('show');
+    
+    setTimeout(() => {
+        t.classList.remove('show');
+    }, 1500); // Hide after 1.5s
+}
+
+async function changePassword() {
+    const p1 = document.getElementById('new-pwd').value;
+    const p2 = document.getElementById('confirm-pwd').value;
+    const err = document.getElementById('pwd-error');
+
+    if (p1.length < 8) { err.textContent = '❌ รหัสผ่านต้องยาวอย่างน้อย 8 ตัวอักษร'; err.style.display = 'block'; return; }
+    if (p1 !== p2) { err.textContent = '❌ รหัสผ่านไม่ตรงกัน'; err.style.display = 'block'; return; }
+
+    const r = await api('/password-change', 'POST', { new_password: p1 });
+    if (r !== null) {
+        closeModal('modal-pwd');
+        showSuccessModal('เปลี่ยนรหัสผ่านสำเร็จ!');
+    } else {
+        showToast('ไม่สามารถเปลี่ยนรหัสผ่านได้', 'error');
+    }
+}
+
+// ── Profile ────────────────────────────────────────────────────────
+async function loadProfile() {
+    const p = await api('/profile');
+    if (!p) return;
+    document.getElementById('prof-username').value = p.username;
+    document.getElementById('prof-role').value = p.role;
+    document.getElementById('prof-callsign').value = p.callsign || '';
+}
+
+async function updateProfile() {
+    const cs = document.getElementById('prof-callsign').value.trim();
+    const r = await api('/profile', 'POST', { callsign: cs ? cs : null });
+    if (r !== null) {
+        showSuccessModal('บันทึกข้อมูลส่วนตัวแล้ว');
+    } else {
+        showToast('เกิดข้อผิดพลาดในการบันทึก', 'error');
+    }
+}
+
+async function updateProfilePassword() {
+    const p1 = document.getElementById('prof-pwd-new').value;
+    const p2 = document.getElementById('prof-pwd-confirm').value;
+
+    if (p1.length < 8) { showToast('รหัสผ่านต้องยาวอย่างน้อย 8 ตัวอักษร', 'error'); return; }
+    if (p1 !== p2) { showToast('รหัสผ่านไม่ตรงกัน', 'error'); return; }
+
+    const r = await api('/password-change', 'POST', { new_password: p1 });
+    if (r !== null) {
+        document.getElementById('prof-pwd-new').value = '';
+        document.getElementById('prof-pwd-confirm').value = '';
+        showSuccessModal('เปลี่ยนรหัสผ่านสำเร็จ!');
+    } else {
+        showToast('เกิดข้อผิดพลาด ไม่สามารถเปลี่ยนรหัสผ่านได้', 'error');
+    }
+}
+
+// ── MQTT Devices ──────────────────────────────────────────────────
+async function loadMqttDevices() {
+  const data = await api('/mqtt-devices');
+  if (!data) return;
+  const tbody = document.getElementById('mqtt-devices-table');
+  tbody.innerHTML = data.length ? data.map(d => `<tr>
+    <td>${d.username}</td>
+    <td>
+        <div style="display:flex; align-items:center; gap:10px;">
+            <label class="switch">
+                <input type="checkbox" ${d.is_enabled ? 'checked' : ''} onchange="toggleMqttDevice(${d.id}, ${d.is_enabled})">
+                <span class="slider"></span>
+            </label>
+            <span class="badge ${d.is_enabled ? 'online' : 'banned'}">${d.is_enabled ? 'ใช้งาน' : 'ระงับ'}</span>
+        </div>
+    </td>
+    <td style="color:var(--text2); font-size:12px;">${d.comment || '—'}</td>
+    <td>
+        <div style="display:flex; gap:20px;">
+            <button class="btn btn-ghost btn-sm" onclick="openEditMqttDevice(${d.id}, '${d.username}', '${d.comment || ''}')">📝 แก้ไข</button>
+            <button class="btn btn-danger btn-sm"
+                    onclick="deleteMqttDevice(${d.id}, '${d.username}')"
+                    ${d.is_enabled ? 'disabled style="opacity:0.2; cursor:not-allowed;" title="ต้องระงับการใช้งานก่อนจึงจะลบได้"' : 'style="opacity:0.8;"'}>
+                🗑️ ลบ
+            </button>
+        </div>
+    </td>
+  </tr>`).join('') : '<tr><td colspan="4" style="text-align:center;color:var(--text2);padding:24px;">ยังไม่มีอุปกรณ์ในระบบ</td></tr>';
+}
+
+let editingMqttId = null;
+
+function openCreateMqttDevice() {
+    editingMqttId = null;
+    document.getElementById('mqtt-modal-title').textContent = '📡 เพิ่มอุปกรณ์ MQTT ใหม่';
+    document.getElementById('mq-username').value = '';
+    document.getElementById('mq-username').disabled = false;
+    document.getElementById('mq-password').value = '';
+    document.getElementById('mq-comment').value = '';
+    document.getElementById('modal-mqtt-device').classList.add('show');
+}
+
+function openEditMqttDevice(id, username, comment) {
+    editingMqttId = id;
+    document.getElementById('mqtt-modal-title').textContent = `⚙️ แก้ไขอุปกรณ์: ${username}`;
+    document.getElementById('mq-username').value = username;
+    document.getElementById('mq-username').disabled = true;
+    document.getElementById('mq-password').value = '';
+    document.getElementById('mq-comment').value = comment;
+    document.getElementById('modal-mqtt-device').classList.add('show');
+}
+
+async function saveMqttDevice() {
+    const u = document.getElementById('mq-username').value.trim();
+    const p = document.getElementById('mq-password').value;
+    const c = document.getElementById('mq-comment').value.trim();
+    
+    if (!editingMqttId && (!u || !p)) return showToast('กรุณากรอกข้อมูลให้ครบ', 'error');
+
+    let res;
+    if (editingMqttId) {
+        res = await api(`/mqtt-devices/${editingMqttId}`, 'POST', { 
+            password: p || null, 
+            comment: c 
+        });
+    } else {
+        res = await api('/mqtt-devices', 'POST', { username: u, password: p, comment: c });
+    }
+
+    if (res) {
+        showSuccessModal(editingMqttId ? 'อัปเดตข้อมูลสำเร็จ' : 'เพิ่มอุปกรณ์สำเร็จ');
+        closeModal('modal-mqtt-device');
+        setTimeout(() => loadMqttDevices(), 100);
+    } else {
+        showToast('เกิดข้อผิดพลาด (Username อาจซ้ำ)', 'error');
+    }
+}
+
+async function toggleMqttDevice(id, currentStatus) {
+    const res = await api(`/mqtt-devices/${id}`, 'POST', { is_enabled: !currentStatus });
+    if (res) {
+        // Removed Toast for enable/disable as requested to keep UI clean
+        loadMqttDevices();
+    }
+}
+
+async function deleteMqttDevice(id, username) {
+    const modal = document.getElementById('modal-confirm');
+    const msg = document.getElementById('confirm-msg');
+    const btn = document.getElementById('btn-confirm-action');
+
+    msg.innerHTML = `ยืนยันการลบอุปกรณ์ <b style="color:var(--text)">"${username}"</b>?<br><br><span style="font-size:11px; opacity:0.7">การลบจะทำให้ข้อมูลหายถาวร และต้องตั้งค่ารหัสผ่านใหม่หากต้องการใช้งานอีกครั้ง</span>`;
+
+    btn.onclick = async () => {
+        const res = await api(`/mqtt-devices/${id}`, 'DELETE');
+        if (res) {
+            closeModal('modal-confirm');
+            showSuccessModal('ลบอุปกรณ์เรียบร้อยแล้ว');
+            loadMqttDevices();
+        }
+    };
+
+    modal.classList.add('show');
+}
+
+// ── Subscriptions ─────────────────────────────────────────────────────
+let currentSubscriptionUser = null;
+
+async function viewUserSubscriptions(username) {
+    currentSubscriptionUser = username;
+    document.getElementById('subscriptions-username').textContent = username;
+    document.getElementById('subscriptions-user-info').style.display = 'block';
+
+    const data = await api(`/subscriptions/${username}`);
+    const listDiv = document.getElementById('subscriptions-list');
+
+    if (!data || data.length === 0) {
+        listDiv.innerHTML = '<div style="text-align:center;color:var(--text2);padding:24px;">ไม่มี Subscriptions</div>';
+    } else {
+        listDiv.innerHTML = data.map(sub => `
+            <div class="tree-item">
+                <div class="tree-header" onclick="togglePayload(${sub.id})">
+                    <span class="toggle-icon">▶</span>
+                    <span style="flex:1;">
+                        <strong style="color:var(--accent);">${sub.topic}</strong>
+                        <span style="color:var(--text2);font-size:11px;margin-left:8px;">QoS: ${sub.qos}</span>
+                    </span>
+                    <span style="color:var(--text2);font-size:11px;">${sub.last_updated}</span>
+                </div>
+                <div class="tree-content" id="payload-${sub.id}">
+                    <div class="tree-payload">${sub.last_payload ? formatJson(sub.last_payload) : 'ไม่มี Payload'}</div>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    // Switch to subscriptions tab
+    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+    document.querySelectorAll('#sidebar nav .menu-item').forEach(a => a.classList.remove('active'));
+    document.getElementById('section-subscriptions').classList.add('active');
+    document.getElementById('page-title').textContent = `Subscriptions: ${username}`;
+}
+
+function openAddSubscription() {
+    document.getElementById('sub-topic').value = '';
+    document.getElementById('sub-qos').value = '0';
+    document.getElementById('sub-payload').value = '';
+    document.getElementById('modal-subscription').classList.add('show');
+}
+
+async function saveSubscription() {
+    const topic = document.getElementById('sub-topic').value.trim();
+    const qos = parseInt(document.getElementById('sub-qos').value);
+    const payload = document.getElementById('sub-payload').value.trim();
+
+    if (!topic) return showToast('กรุณาระบุ Topic', 'error');
+
+    const res = await api('/subscriptions', 'POST', {
+        username: currentSubscriptionUser,
+        topic: topic,
+        qos: qos,
+        payload: payload || null
+    });
+
+    if (res) {
+        closeModal('modal-subscription');
+        showSuccessModal('บันทึก Subscription สำเร็จ');
+        viewUserSubscriptions(currentSubscriptionUser);
+    } else {
+        showToast('เกิดข้อผิดพลาดในการบันทึก', 'error');
+    }
+}
+
+async function requestSubscriptionReport() {
+    showToast('กำลังขอรายงานจาก Device...', 'success');
+
+    const res = await api('/mqtt/request-subscriptions', 'POST', {
+        username: currentSubscriptionUser
+    });
+
+    if (res) {
+        showToast('ส่งคำสั่งให้ Device แล้ว - Device จะส่งรายงานกลับมา', 'success');
+        // Wait 2 seconds then refresh
+        setTimeout(() => {
+            viewUserSubscriptions(currentSubscriptionUser);
+        }, 2000);
+    } else {
+        showToast('ไม่สามารถส่งคำสั่งได้', 'error');
+    }
+}
+
+function backToMqttDevices() {
+    currentSubscriptionUser = null;
+    switchTab('mqtt-devices');
+    // Manually set active state for mqtt-devices menu
+    document.querySelectorAll('#sidebar nav .menu-item').forEach(a => a.classList.remove('active'));
+    document.querySelectorAll('#sidebar nav .menu-item')[4].classList.add('active');
+}
+
+function togglePayload(id) {
+    const content = document.getElementById(`payload-${id}`);
+    const header = content.previousElementSibling;
+    header.classList.toggle('expanded');
+    content.classList.toggle('show');
+}
+
+function toggleTopicPayload(id) {
+    const content = document.getElementById(`topic-payload-${id}`);
+    const header = content.previousElementSibling;
+    header.classList.toggle('expanded');
+    content.classList.toggle('show');
+}
+
+// Store expanded state for topics
+const expandedTopics = new Set();
+let lastTopicsData = null;
+
+async function loadTopics() {
+    const data = await api('/topics');
+    const listDiv = document.getElementById('topics-list');
+
+    if (!data || data.length === 0) {
+        listDiv.innerHTML = '<div style="text-align:center;color:var(--text2);padding:24px;">ไม่มี Topics</div>';
+        lastTopicsData = data;
+        return;
+    }
+
+    // Re-render all to maintain proper ordering (newest first)
+    listDiv.innerHTML = data.map(topic => {
+        const isExpanded = expandedTopics.has(topic.id);
+        return `
+        <div class="tree-item">
+            <div class="tree-header ${isExpanded ? 'expanded' : ''}" onclick="toggleTopicPayload(${topic.id})">
+                <span class="toggle-icon">${isExpanded ? '▼' : '▶'}</span>
+                <span style="flex:1;">
+                    <strong style="color:var(--accent);">${topic.topic}</strong>
+                </span>
+                <span style="color:var(--text2);font-size:11px;">${topic.last_updated}</span>
+                <button class="btn btn-danger btn-sm" onclick="deleteTopic(${topic.id}, event)">🗑️</button>
+            </div>
+            <div class="tree-content ${isExpanded ? 'show' : ''}" id="topic-payload-${topic.id}">
+                <div class="tree-payload">${topic.last_payload ? formatJson(topic.last_payload) : 'ไม่มี Payload'}</div>
+            </div>
+        </div>
+    `}).join('');
+
+    lastTopicsData = data;
+}
+
+async function deleteTopic(id, event) {
+    event.stopPropagation(); // Prevent toggle
+    if (!confirm('คุณต้องการลบ Topic นี้ใช่หรือไม่?')) return;
+
+    const res = await fetch(`/api/v1/auth/topics/${id}`, {
+        method: 'DELETE',
+        headers: {'Authorization': `Bearer ${token}`}
+    });
+
+    if (res.ok) {
+        showSuccessModal('ลบ Topic แล้ว');
+        loadTopics();
+    } else {
+        showToast('ไม่สามารถลบ Topic ได้', 'error');
+    }
+}
+
+function toggleTopicPayload(id) {
+    const content = document.getElementById(`topic-payload-${id}`);
+    const header = content.previousElementSibling;
+    const icon = header.querySelector('.toggle-icon');
+
+    if (expandedTopics.has(id)) {
+        expandedTopics.delete(id);
+        header.classList.remove('expanded');
+        content.classList.remove('show');
+        icon.textContent = '▶';
+    } else {
+        expandedTopics.add(id);
+        header.classList.add('expanded');
+        content.classList.add('show');
+        icon.textContent = '▼';
+    }
+}
+
+// Auto-refresh topics when on monitor tab
+let monitorInterval = null;
+
+function startMonitorPolling() {
+    if (monitorInterval) clearInterval(monitorInterval);
+    loadTopics();
+    monitorInterval = setInterval(loadTopics, 2000); // Poll every 2 seconds
+}
+
+function stopMonitorPolling() {
+    if (monitorInterval) {
+        clearInterval(monitorInterval);
+        monitorInterval = null;
+    }
+}
+
+function formatJson(str) {
+    try {
+        const obj = JSON.parse(str);
+        return JSON.stringify(obj, null, 2);
+    } catch (e) {
+        return str;
+    }
+}
+
+// ── Init ───────────────────────────────────────────────────────────
+window.addEventListener('keydown', e => { if (e.key === 'Enter' && document.getElementById('login-screen').style.display !== 'none') doLogin(); });
+if (token) {
+  document.getElementById('login-screen').style.display = 'none';
+  startAutoRefresh();
+  refreshAll();
+}
+</script>
+</body>
+</html>

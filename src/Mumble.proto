@@ -1,0 +1,124 @@
+syntax = "proto2";
+package MumbleProto;
+
+message Version {
+    optional uint32 version = 1;
+    optional string release = 2;
+    optional string os = 3;
+    optional string os_version = 4;
+    optional uint64 version_v2 = 5;
+}
+
+message Authenticate {
+    optional string username = 1;
+    optional string password = 2;
+    repeated string tokens = 3;
+    repeated int32 celt_versions = 4;
+    optional bool opus = 5 [default = false];
+}
+
+message CryptSetup {
+    optional bytes key = 1;
+    optional bytes client_nonce = 2;
+    optional bytes server_nonce = 3;
+}
+
+message ChannelState {
+    optional uint32 channel_id = 1;
+    optional uint32 parent = 2;
+    optional string name = 3;
+    repeated uint32 links = 4;
+    optional string description = 5;
+    repeated uint32 links_add = 6;
+    repeated uint32 links_remove = 7;
+    optional bool temporary = 8 [default = false];
+    optional int32 position = 9 [default = 0];
+    optional uint32 max_users = 10;
+}
+
+message UserState {
+    optional uint32 session = 1;
+    optional uint32 actor = 2;
+    optional string name = 3;
+    optional uint32 user_id = 4;
+    optional uint32 channel_id = 5;
+    optional bool mute = 6;
+    optional bool deaf = 7;
+    optional bool suppress = 8;
+    optional bool self_mute = 9;
+    optional bool self_deaf = 10;
+    optional bytes texture = 11;
+    optional bytes plugin_context = 12;
+    optional string plugin_identity = 13;
+    optional string comment = 14;
+    optional string hash = 15;
+    optional bytes comment_hash = 16;
+    optional bytes texture_hash = 17;
+    optional bool priority_speaker = 18;
+    optional bool recording = 19;
+}
+
+message ServerSync {
+    optional uint32 session = 1;
+    optional uint32 max_bandwidth = 2;
+    optional string welcome_text = 3;
+    optional uint64 permissions = 4;
+}
+
+message ServerConfig {
+    optional uint32 max_bandwidth = 1;
+    optional string welcome_text = 2;
+    optional bool allow_html = 3;
+    optional uint32 message_length = 4;
+    optional uint32 image_message_length = 5;
+}
+
+message CodecVersion {
+    required int32 alpha = 1;
+    required int32 beta = 2;
+    required bool prefer_alpha = 3;
+    optional bool opus = 4 [default = false];
+}
+
+message Ping {
+    optional uint64 timestamp = 1;
+    optional uint32 good = 2;
+    optional uint32 late = 3;
+    optional uint32 lost = 4;
+    optional uint32 resync = 5;
+    optional uint32 udp_packets = 6;
+    optional uint32 tcp_packets = 7;
+    optional float udp_ping_avg = 8;
+    optional float udp_ping_var = 9;
+    optional float tcp_ping_avg = 10;
+    optional float tcp_ping_var = 11;
+}
+
+message Reject {
+    enum RejectType {
+        None = 0;
+        WrongVersion = 1;
+        InvalidUsername = 2;
+        WrongUserPW = 3;
+        WrongServerPW = 4;
+        UsernameInUse = 5;
+        ServerFull = 6;
+        NoCertificate = 7;
+        AuthenticatorFail = 8;
+    }
+    optional RejectType type = 1;
+    optional string reason = 2;
+}
+
+message PermissionQuery {
+    optional uint32 channel_id = 1;
+    optional uint32 permissions = 2;
+    optional bool flush = 3;
+}
+
+message UserRemove {
+    required uint32 session = 1;
+    optional uint32 actor = 2;
+    optional string reason = 3;
+    optional bool ban = 4;
+}

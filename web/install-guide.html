@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CMT-IPAS | Installation Guide (Dark Edition)</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=Prompt:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #3498db;
+            --primary-glow: rgba(52, 152, 219, 0.2);
+            --bg: #0f172a;
+            --card-bg: #1e293b;
+            --text-main: #f1f5f9;
+            --text-dim: #94a3b8;
+            --code-bg: #000000;
+            --accent: #0ea5e9;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', 'Prompt', sans-serif;
+            background-color: var(--bg);
+            color: var(--text-main);
+            line-height: 1.6;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #020617 0%, #1e293b 100%);
+            padding: 80px 20px;
+            text-align: center;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .header h1 {
+            font-size: 2.8rem;
+            margin-bottom: 10px;
+            letter-spacing: 2px;
+            background: linear-gradient(to right, #fff, var(--primary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-weight: 800;
+        }
+
+        .header p {
+            font-weight: 300;
+            color: var(--text-dim);
+            font-size: 1.1rem;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 40px auto 80px;
+            padding: 0 20px;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border-radius: 20px;
+            padding: 45px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+            margin-bottom: 30px;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .step {
+            display: flex;
+            margin-bottom: 50px;
+            position: relative;
+        }
+
+        .step-number {
+            min-width: 45px;
+            height: 45px;
+            background: var(--primary);
+            color: white;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            margin-right: 25px;
+            box-shadow: 0 0 20px var(--primary-glow);
+        }
+
+        .step-content h2 {
+            font-size: 1.5rem;
+            margin-bottom: 12px;
+            color: var(--accent);
+            font-weight: 600;
+        }
+
+        .step-content p {
+            color: var(--text-dim);
+            margin-bottom: 15px;
+        }
+
+        .code-block {
+            background: var(--code-bg);
+            color: #38bdf8;
+            padding: 14px 22px;
+            border-radius: 10px;
+            font-family: 'Fira Code', 'Courier New', monospace;
+            font-size: 0.95rem;
+            margin: 12px 0;
+            display: inline-block;
+            border: 1px solid rgba(56, 189, 248, 0.2);
+        }
+
+        .alert {
+            background: rgba(234, 179, 8, 0.1);
+            border-left: 4px solid #eab308;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 25px 0;
+        }
+
+        .alert strong {
+            color: #facc15;
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .alert span {
+            color: var(--text-dim);
+            font-size: 0.95rem;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 6px 16px;
+            background: rgba(14, 165, 233, 0.1);
+            color: var(--accent);
+            border-radius: 30px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            margin-bottom: 20px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        kbd {
+            background: #475569;
+            padding: 2px 6px;
+            border-radius: 4px;
+            color: white;
+            font-size: 0.8rem;
+        }
+
+        .footer {
+            text-align: center;
+            padding: 40px;
+            color: var(--text-dim);
+            border-top: 1px solid rgba(255,255,255,0.05);
+            margin-top: 50px;
+        }
+
+        @media (max-width: 600px) {
+            .step { flex-direction: column; }
+            .step-number { margin-bottom: 20px; }
+            .header h1 { font-size: 2rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h1>CMT-IPAS</h1>
+        <p>Industrial Audio Gateway Setup Guide</p>
+    </div>
+
+    <div class="container">
+        <div class="card">
+            <div class="badge">Windows Deployment</div>
+            
+            <!-- Step 1 -->
+            <div class="step">
+                <div class="step-number">01</div>
+                <div class="step-content">
+                    <h2>การติดตั้งโปรแกรม</h2>
+                    <p>ดาวน์โหลดและคลายไฟล์ชุดติดตั้งลงในเครื่องคอมพิวเตอร์ของคุณ</p>
+                    <div class="alert">
+                        <strong>คำแนะนำด้านความปลอดภัย:</strong>
+                        <span>ควรติดตั้งไว้ในโฟลเดอร์ เช่น <span class="code-block">C:\CMT-IPAS</span> และหลีกเลี่ยงโฟลเดอร์ที่มีชื่อเป็นภาษาไทย</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 2 -->
+            <div class="step">
+                <div class="step-number">02</div>
+                <div class="step-content">
+                    <h2>การขอสิทธิ์ใช้งาน (Licensing)</h2>
+                    <p>ระบบจำเป็นต้องมีการลงทะเบียนรหัสเครื่องเพื่อใช้งาน:</p>
+                    <ol style="margin-left: 20px; color: var(--text-dim);">
+                        <li>รันไฟล์ <span class="code-block">cmt-ipas.exe</span></li>
+                        <li>คัดลอกรหัส <strong>SERVER HWID</strong> ที่แสดงในหน้าต่างโปรแกรม</li>
+                        <li>ส่งรหัสให้ทีมสนับสนุนเพื่อรับไฟล์ <span class="code-block">license.dat</span></li>
+                        <li>นำไฟล์ลิขสิทธิ์มาวางในโฟลเดอร์เดียวกับโปรแกรม</li>
+                    </ol>
+                </div>
+            </div>
+
+            <!-- Step 3 -->
+            <div class="step">
+                <div class="step-number">03</div>
+                <div class="step-content">
+                    <h2>การเข้าสู่หน้าควบคุม (Dashboard)</h2>
+                    <p>จัดการช่องสัญญาณและตรวจสอบสถานะผ่านเบราว์เซอร์:</p>
+                    <div class="code-block" style="color: #60a5fa;">http://127.0.0.1:19001</div>
+                    <p style="margin-top: 10px; color: var(--text-dim); font-size: 0.9rem;">
+                        <strong>Default Login:</strong><br>
+                        Username: <span style="color: #fff;">admin</span> / Password: <span style="color: #fff;">password123</span>
+                    </p>
+                    <p style="margin-top: 15px;">หรือคลิกขวาที่ไอคอน <img src="assets/icon.png" style="height: 18px; vertical-align: middle; opacity: 0.8;" onerror="this.style.display='none'"> ในระบบ System Tray เลือก <strong>🌍 Open Dashboard</strong></p>
+                </div>
+            </div>
+
+            <!-- Step 4 -->
+            <div class="step">
+                <div class="step-number">04</div>
+                <div class="step-content">
+                    <h2>การตั้งค่ารันอัตโนมัติ</h2>
+                    <p>ตั้งค่าให้โปรแกรมทำงานทันทีเมื่อเปิดเครื่อง (Startup):</p>
+                    <p style="font-size: 0.95rem;">1. สร้าง Shortcut ของไฟล์โปรแกรม<br>
+                    2. กด <kbd>Win + R</kbd> แล้วพิมพ์ <span class="code-block">shell:startup</span><br>
+                    3. นำ Shortcut มาวางในโฟลเดอร์นั้น</p>
+                </div>
+            </div>
+
+        </div>
+
+        <div class="card" style="border-left: 5px solid var(--accent); background: linear-gradient(to right, #1e293b, #0f172a);">
+            <h2 style="margin-bottom: 15px; color: #fff;">Technical Support</h2>
+            <p style="color: var(--text-dim);">หากมีข้อสงสัยเชิงเทคนิคหรือต้องการความช่วยเหลือเพิ่มเติม:</p>
+            <div style="margin-top: 25px;">
+                <div style="font-weight: 700; font-size: 1.1rem; color: var(--accent);">Chiangmai Micro Technology</div>
+                <div style="color: var(--text-dim); font-size: 0.9rem;">Expert in Industrial Audio & Network Solutions</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="footer">
+        &copy; 2026 Chiangmai Micro Technology. All rights reserved.
+    </div>
+
+</body>
+</html>

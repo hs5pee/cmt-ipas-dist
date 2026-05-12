@@ -1,0 +1,63 @@
+[package]
+name = "cmt-ipas"
+version = "1.0.1"
+edition = "2021"
+authors = ["Antigravity AI <info@antigravity.ai>"]
+description = "CMT-IPAS: Internet Protocol Audio Server - Industrial-grade voice communication server"
+
+[dependencies]
+# Async runtime
+tokio = { version = "1", features = ["full"] }
+
+# Mumble Protocol (Protocol Buffers)
+prost = "0.13"
+prost-types = "0.13"
+
+# TLS / Encryption
+tokio-rustls = "0.26"
+rustls = "0.23"
+rustls-pemfile = "2"
+rcgen = "0.13"
+rand = "0.8"
+
+# MQTT Integration
+rumqttc = "0.24"
+rumqttd = { version = "0.20.0", features = ["websocket", "use-rustls"] }
+
+# Audio codec (requires CMake + libopus on the build machine)
+# Uncomment when implementing audio pipeline (Phase 2)
+# opus = "0.3"
+
+# Logging
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+
+# Configuration
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+toml = "0.8"
+
+# CLI arguments
+clap = { version = "4", features = ["derive"] }
+
+# REST API & Database
+axum = "0.7"
+tower-http = { version = "0.5", features = ["cors", "trace", "fs"] }
+sqlx = { version = "0.8", features = ["sqlite", "runtime-tokio-rustls", "macros"] }
+jsonwebtoken = "9"
+bcrypt = "0.15"
+colored = "2.1"
+machineid-rs = "1.2"
+dashmap = "6.0"
+ed25519-dalek = "2.1"
+hex = "0.4"
+# GUI & System Tray
+tray-icon = "0.19"
+tao = "0.28"
+image = "0.25"
+
+
+
+[build-dependencies]
+prost-build = "0.13"
+protoc-bin-vendored = "3.0"
